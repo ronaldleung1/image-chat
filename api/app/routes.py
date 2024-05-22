@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
-import openai
+from app.openai_service import generate_image
+
 
 api = Blueprint("api", __name__)
 
@@ -9,12 +10,12 @@ def index():
     return "Test"
 
 
-@api.route("/get-response", methods=["POST"])
+@api.route("/generate-image", methods=["POST"])
 def get_response():
     data = request.json
     prompt = data.get("prompt")
+    if not prompt:
+        return jsonify({"error": "No prompt provided"}), 400
 
-    response = openai.Completion.create(
-        engine="davinci-codex", prompt=prompt, max_tokens=50
-    )
-    return jsonify(response.choices[0].text)
+    response_text = generate_image(prompt)
+    return jsonify({"response": response_text})
