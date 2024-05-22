@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Inter } from "next/font/google";
+import axios from "axios";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,8 +22,32 @@ export default function Home() {
       ...prevChatLog,
       { type: "user", content: inputValue },
     ]);
+
+    generateImage(inputValue);
+
     setInputValue("");
   };
+  const generateImage = async (prompt: string) => {
+    setIsLoading(true);
+    const response = await fetch("/api/generate-image", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt: prompt }),
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setChatLog((prevChatLog: Message[]) => [
+        ...prevChatLog,
+        { type: "bot", content: data.image_url },
+      ]);
+      setIsLoading(false);
+    } else {
+      console.error("Error generating image:", response.statusText);
+    }
+  };
+
   return (
     <>
       <h1>Image Chat</h1>

@@ -17,5 +17,5 @@ def get_response():
     if not prompt:
         return jsonify({"error": "No prompt provided"}), 400
 
-    response_text = generate_image(prompt)
-    return jsonify({"response": response_text})
+    image_url = generate_image(prompt)
+    return jsonify({"image_url": image_url})
