@@ -18,7 +18,6 @@ export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [chatLog, setChatLog] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string>();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
@@ -42,15 +41,8 @@ export default function Home() {
       setSelectedImageUrl(data.image_url);
       // TODO: set selected image
 
-      // try {
-      //   const image = await fetch(data.image_url);
-      //   const blob = await image.blob();
-      //   setLatestImage(blob);
-      // } catch (error) {
-      //   console.error("Error fetching image:", error);
-      // }
-
-      setIsEditing(true);
+      // if generation is iterative, set the selected image to the latest image
+      // setIsEditing(true);
     } else {
       console.error(
         `Error ${
@@ -100,7 +92,6 @@ export default function Home() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setIsEditing(true);
     const file = e.target.files?.[0];
     if (file) {
       setImagePreview(file); // Store the file object
@@ -115,9 +106,6 @@ export default function Home() {
   const handleRemoveImage = () => {
     setImagePreviewUrl(null);
     setImagePreview(null);
-    if (!selectedImage) {
-      setIsEditing(false);
-    }
   };
 
   return (
@@ -143,30 +131,9 @@ export default function Home() {
                 <div className="rounded-full h-[40px] w-[40px] border bg-background border-stone-200"></div>
               )}
               <div className="flex-1">
-                <h3 className="font-semibold">
-                  Cat taking a selfie while sleeping on a yacht
-                </h3>
+                <h3 className="font-semibold">New Chat</h3>
                 <p className="text-zinc-500 dark:text-zinc-400 text-sm">
-                  2d ago
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700">
-              <img
-                alt="User Avatar"
-                className="rounded-full"
-                height="40"
-                src="/placeholder.svg"
-                style={{
-                  aspectRatio: "40/40",
-                  objectFit: "cover",
-                }}
-                width="40"
-              />
-              <div className="flex-1">
-                <h3 className="font-semibold">Jane Smith</h3>
-                <p className="text-zinc-500 dark:text-zinc-400 text-sm">
-                  Just checking in...
+                  Just now
                 </p>
               </div>
             </div>
@@ -207,7 +174,6 @@ export default function Home() {
                       >
                         <Download className="w-6 h-6" />
                       </Button>
-                      <Badge variant="outline">v{(index - 1) / 2}</Badge>
                     </div>
                   </>
                 )}
@@ -218,7 +184,6 @@ export default function Home() {
                 <div className="rounded-lg bg-muted p-3 max-w-[75%]">
                   <Skeleton className="h-[256px] w-[256px] rounded-lg" />
                 </div>
-                <Badge variant="outline">v{(chatLog.length - 1) / 2}</Badge>
               </div>
             )}
           </div>
@@ -266,11 +231,11 @@ export default function Home() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder={
-                isEditing ? "Describe changes..." : "Describe your image..."
+                imagePreview ? "Describe changes..." : "Describe your image..."
               }
             />
             <Button type="submit" disabled={isLoading || !inputValue}>
-              {isEditing ? "Edit Image" : "Generate Image"}
+              {imagePreview ? "Edit Image" : "Generate Image"}
             </Button>
           </form>
         </div>
