@@ -1,16 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Inter } from "next/font/google";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
-import { Image as ImageIcon, Download } from "lucide-react";
-
-const inter = Inter({ subsets: ["latin"] });
+import { Image as ImageIcon, Download, X } from "lucide-react";
 
 type Message = {
   type: "user" | "bot";
@@ -24,6 +21,7 @@ export default function Home() {
   const [isEditing, setIsEditing] = useState(false);
   const [latestImageUrl, setLatestImageUrl] = useState<string>();
   const [latestImage, setLatestImage] = useState<Blob | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
   const handleImageRequest = async (url: string, formData: FormData) => {
     setIsLoading(true);
@@ -80,6 +78,25 @@ export default function Home() {
     }
 
     setInputValue("");
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsEditing(true);
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImagePreviewUrl(null);
+    if (!latestImage) {
+      setIsEditing(false);
+    }
   };
 
   return (
@@ -190,9 +207,40 @@ export default function Home() {
             className="flex items-center gap-2 max-w-[700px] mx-auto"
             onSubmit={handleSubmit}
           >
-            <Button size="icon" variant="ghost">
+            <label
+              htmlFor="file-input"
+              className={buttonVariants({ variant: "ghost" })}
+            >
               <ImageIcon className="w-6 h-6" />
-            </Button>
+            </label>
+            <input
+              id="file-input"
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            {imagePreviewUrl && (
+              <div className="relative">
+                <Image
+                  src={imagePreviewUrl}
+                  alt="Preview"
+                  width="96"
+                  height="96"
+                  style={{
+                    aspectRatio: "40/40",
+                    objectFit: "cover",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="absolute right-[-4px] top-[-4px] bg-red-500 text-white rounded-full h-4 w-4 flex items-center justify-center hover:bg-red-400"
+                >
+                  <X className="w-2 h-2" />
+                </button>
+              </div>
+            )}
             <Textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
