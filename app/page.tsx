@@ -19,12 +19,15 @@ export default function Home() {
   const [chatLog, setChatLog] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [latestImageUrl, setLatestImageUrl] = useState<string>();
-  const [latestImage, setLatestImage] = useState<Blob | null>(null);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string>();
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<File | null>(null);
+  const [submitForm, setSubmitForm] = useState(false);
 
   const handleImageRequest = async (url: string, formData: FormData) => {
     setIsLoading(true);
+    console.log("handleImageRequest", url, formData);
     const response = await fetch(url, {
       method: "POST",
       body: formData,
@@ -36,15 +39,16 @@ export default function Home() {
         ...prevChatLog,
         { type: "bot", content: data.image_url },
       ]);
-      setLatestImageUrl(data.image_url);
+      setSelectedImageUrl(data.image_url);
+      // TODO: set selected image
 
-      try {
-        const image = await fetch(data.image_url);
-        const blob = await image.blob();
-        setLatestImage(blob);
-      } catch (error) {
-        console.error("Error fetching image:", error);
-      }
+      // try {
+      //   const image = await fetch(data.image_url);
+      //   const blob = await image.blob();
+      //   setLatestImage(blob);
+      // } catch (error) {
+      //   console.error("Error fetching image:", error);
+      // }
 
       setIsEditing(true);
     } else {
@@ -58,32 +62,48 @@ export default function Home() {
     setIsLoading(false);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    if (submitForm && selectedImage) {
+      const formData = new FormData();
+      formData.append("prompt", inputValue);
+      formData.append("image", selectedImage);
+      handleImageRequest("/api/edit-image", formData);
+      setSubmitForm(false); // Reset the trigger
+    }
+  }, [submitForm, selectedImage, inputValue]);
+
+  // Modify your handleSubmit function
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // if there is an image uploaded according to the form, set it as the selected image
+    if (imagePreview) {
+      setSelectedImage(imagePreview);
+      setImagePreviewUrl(null);
+      setImagePreview(null);
+      setSubmitForm(true); // Set the trigger for the API call
+    } else {
+      const formData = new FormData();
+      formData.append("prompt", inputValue);
+      handleImageRequest("/api/generate-image", formData);
+    }
+
     setChatLog((prevChatLog: Message[]) => [
       ...prevChatLog,
       { type: "user", content: inputValue },
     ]);
 
-    const formData = new FormData();
-    formData.append("prompt", inputValue);
-
-    if (!isEditing) {
-      handleImageRequest("/api/generate-image", formData);
-    } else {
-      if (latestImage) {
-        formData.append("image", latestImage);
-        handleImageRequest("/api/edit-image", formData);
-      }
-    }
-
-    setInputValue("");
+    // Defer the execution of setInputValue("")
+    setTimeout(() => {
+      setInputValue("");
+    }, 0);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsEditing(true);
     const file = e.target.files?.[0];
     if (file) {
+      setImagePreview(file); // Store the file object
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreviewUrl(reader.result as string);
@@ -94,7 +114,8 @@ export default function Home() {
 
   const handleRemoveImage = () => {
     setImagePreviewUrl(null);
-    if (!latestImage) {
+    setImagePreview(null);
+    if (!selectedImage) {
       setIsEditing(false);
     }
   };
@@ -106,12 +127,12 @@ export default function Home() {
           <h2 className="text-2xl font-bold">Image Chat</h2>
           <div className="space-y-2">
             <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-zinc-700">
-              {latestImageUrl ? (
+              {selectedImageUrl ? (
                 <Image
                   alt="User Avatar"
                   className="rounded-full bg-muted"
                   height="40"
-                  src={latestImageUrl}
+                  src={selectedImageUrl}
                   style={{
                     aspectRatio: "40/40",
                     objectFit: "cover",
