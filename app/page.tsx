@@ -22,26 +22,12 @@ export default function Home() {
   const [chatLog, setChatLog] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [latestImage, setLatestImage] = useState<string>();
+  const [latestImageUrl, setLatestImageUrl] = useState<string>();
+  const [latestImage, setLatestImage] = useState<Blob | null>(null);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setChatLog((prevChatLog: Message[]) => [
-      ...prevChatLog,
-      { type: "user", content: inputValue },
-    ]);
-
-    generateImage(inputValue);
-
-    setInputValue("");
-  };
-
-  const generateImage = async (prompt: string) => {
+  const handleImageRequest = async (url: string, formData: FormData) => {
     setIsLoading(true);
-    const formData = new FormData();
-    formData.append("prompt", prompt);
-
-    const response = await fetch("/api/generate-image", {
+    const response = await fetch(url, {
       method: "POST",
       body: formData,
     });
@@ -52,11 +38,48 @@ export default function Home() {
         ...prevChatLog,
         { type: "bot", content: data.image_url },
       ]);
-      setIsLoading(false);
+      setLatestImageUrl(data.image_url);
+
+      try {
+        const image = await fetch(data.image_url);
+        const blob = await image.blob();
+        setLatestImage(blob);
+      } catch (error) {
+        console.error("Error fetching image:", error);
+      }
+
       setIsEditing(true);
     } else {
-      console.error("Error generating image:", response.statusText);
+      console.error(
+        `Error ${
+          url === "/api/generate-image" ? "generating" : "editing"
+        } image:`,
+        response.statusText
+      );
     }
+    setIsLoading(false);
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setChatLog((prevChatLog: Message[]) => [
+      ...prevChatLog,
+      { type: "user", content: inputValue },
+    ]);
+
+    const formData = new FormData();
+    formData.append("prompt", inputValue);
+
+    if (!isEditing) {
+      handleImageRequest("/api/generate-image", formData);
+    } else {
+      if (latestImage) {
+        formData.append("image", latestImage);
+        handleImageRequest("/api/edit-image", formData);
+      }
+    }
+
+    setInputValue("");
   };
 
   return (
@@ -66,12 +89,12 @@ export default function Home() {
           <h2 className="text-2xl font-bold">Image Chat</h2>
           <div className="space-y-2">
             <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-zinc-700">
-              {latestImage ? (
+              {latestImageUrl ? (
                 <Image
                   alt="User Avatar"
                   className="rounded-full bg-muted"
                   height="40"
-                  src={latestImage}
+                  src={latestImageUrl}
                   style={{
                     aspectRatio: "40/40",
                     objectFit: "cover",

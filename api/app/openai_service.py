@@ -23,11 +23,20 @@ def generate_image(prompt):
         return str(e)
 
 
+def make_image_square(image):
+    width, height = image.size
+    new_size = max(width, height)
+    new_image = Image.new("RGBA", (new_size, new_size), (255, 255, 255, 0))
+    new_image.paste(image, ((new_size - width) // 2, (new_size - height) // 2))
+    return new_image
+
+
 def edit_image(prompt, image_file):
     try:
         image = Image.open(image_file)
+        square_image = make_image_square(image)
         byte_arr = io.BytesIO()
-        image.save(byte_arr, format="PNG")  # Save the image as PNG in memory
+        square_image.save(byte_arr, format="PNG")  # Save the image as PNG in memory
         byte_arr = byte_arr.getvalue()
 
         response = client.images.edit(

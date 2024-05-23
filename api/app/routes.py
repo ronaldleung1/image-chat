@@ -5,11 +5,6 @@ from app.openai_service import generate_image, edit_image
 api = Blueprint("api", __name__)
 
 
-@api.route("/", methods=["GET"])
-def index():
-    return "Test"
-
-
 @api.route("/generate-image", methods=["POST"])
 def generate_image_route():
     prompt = request.form.get("prompt")
@@ -27,6 +22,17 @@ def edit_image_route():
 
     if not prompt or not image_file:
         return jsonify({"error": "Prompt and image are required"}), 400
+
+    # Check if image is a valid PNG file
+    if not image_file.filename.endswith(".png"):
+        return (
+            jsonify({"error": "Invalid image format. Only PNG files are allowed."}),
+            400,
+        )
+
+    # Check if image size is less than 4MB
+    if len(image_file.read()) > 4 * 1024 * 1024:
+        return jsonify({"error": "Image size exceeds the maximum limit of 4MB."}), 400
 
     image_url = edit_image(prompt, image_file)
     return jsonify({"image_url": image_url})
