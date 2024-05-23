@@ -4,7 +4,15 @@ A chatbot that edits images and generates new images from text.
 
 ## Getting Started
 
-First, install the dependencies:
+This project requires an OpenAI API key. You can get one [here](https://platform.openai.com/account/api-keys).
+
+Create a `.env` file in the root directory with the following content:
+
+```bash
+OPENAI_API_KEY=<your_api_key>
+```
+
+Next, install the dependencies:
 
 ```bash
 npm install
