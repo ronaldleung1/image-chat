@@ -57,7 +57,7 @@ export const MessageForm: React.FC<MessageFormProps> = ({
         <input
           id="file-input"
           type="file"
-          accept="image/*"
+          accept=".png"
           onChange={handleFileChange}
           className="hidden"
         />

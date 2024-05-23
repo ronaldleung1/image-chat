@@ -7,6 +7,7 @@ import { MessageForm } from "@/components/MessageForm";
 type Message = {
   type: "user" | "bot";
   content: string;
+  image?: string;
 };
 
 export default function Home() {
@@ -28,7 +29,7 @@ export default function Home() {
       const data = await response.json();
       setChatLog((prevChatLog: Message[]) => [
         ...prevChatLog,
-        { type: "bot", content: data.image_url },
+        { type: "bot", content: "", image: data.image_url },
       ]);
       setSelectedImageUrl(data.image_url);
     } else {
@@ -63,7 +64,11 @@ export default function Home() {
 
     setChatLog((prevChatLog: Message[]) => [
       ...prevChatLog,
-      { type: "user", content: inputValue },
+      {
+        type: "user",
+        content: inputValue,
+        image: imageFile ? URL.createObjectURL(imageFile) : undefined,
+      },
     ]);
   };
 
