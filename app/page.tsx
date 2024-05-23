@@ -35,23 +35,17 @@ export default function Home() {
 
     setInputValue("");
   };
+
   const generateImage = async (prompt: string) => {
-    // setChatLog((prevChatLog: Message[]) => [
-    //   ...prevChatLog,
-    //   {
-    //     type: "bot",
-    //     content:
-    //       "https://oaidalleapiprodscus.blob.core.windows.net/private/org-S4KZYdYIayqtzUwHfdkD7lIX/user-CkSj5QcD2vSaAnIbQJyHDe00/img-tRzDBF6rrL2ceC87JwyRzGNT.png?st=2024-05-22T20%3A32%3A26Z&se=2024-05-22T22%3A32%3A26Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2024-05-22T10%3A37%3A46Z&ske=2024-05-23T10%3A37%3A46Z&sks=b&skv=2021-08-06&sig=MFDmc01DkF0%2Brzy1d7inblRkaB986DHDdWSJQWv590E%3D",
-    //   },
-    // ]);
     setIsLoading(true);
+    const formData = new FormData();
+    formData.append("prompt", prompt);
+
     const response = await fetch("/api/generate-image", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ prompt: prompt }),
+      body: formData,
     });
+
     if (response.ok) {
       const data = await response.json();
       setChatLog((prevChatLog: Message[]) => [
